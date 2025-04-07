@@ -3,9 +3,20 @@
 
 # also use data.table here for speed advantage
 library(data.table)
+# simulating this in parallel
+library(parallel)
+library(doParallel)
+
+# setting up parallel computing
+num_cores <- max(1, detectCores() - 1)
+cl <- makeCluster(num_cores)
+registerDoParallel(cl)
 
 # source simPrior to get AAFBF simulation function
 source("aafbf.R")
+
+# setting environment explicitly for windows
+clusterExport(cl, varlist = ls(), envir = environment())
 
 # creating all combinations of parameters
 param_grid <- CJ(
@@ -22,20 +33,20 @@ param_list <- lapply(1:nrow(param_grid), function(x) as.list(param_grid[x]))
 
 
 # function to loop over all parameters
-aafbf_params <- function(param_list, ...) {
+aafbf_params_parallel <- function(param_list, ...) {
+  
+  # give start time
+  start_time <- Sys.time()
+  print(paste("Start time:", format(start_time, "%Y-%m-%d %H:%M:%S")))
   
   # get a list with the extra arguments (to modify nr_it)
   extra_args <- list(...)
   
-  # initiate empty list to store results
-  # (this is a more memory efficient way of doing sim_results <- list() )
-  sim_results <- vector("list", length(param_list))
+  # compute in parallel
+  par_results <- foreach(i = seq_along(param_list),
+                         .combine = rbind,
+                         .packages = c("data.table")) %dopar% {
   
-  for (i in seq_along(param_list)) {
-    
-    # print progress
-    message(sprintf("Running simulation %d of %d", i, length(param_list)))
-    
     # get the current parameter set and the optional extra args in ...
     params <- modifyList(param_list[[i]], extra_args)
     
@@ -46,14 +57,20 @@ aafbf_params <- function(param_list, ...) {
     sim_result[, sim_id := i]
     
     # store this 
-    sim_results[[i]] <- sim_result
+    return(sim_result)
   }
   
-  # return a big table with all results
-  return(rbindlist(sim_results, use.names = TRUE, fill = TRUE))
+  # give end time and elapsed time
+  end_time <- Sys.time()
+  print(paste("End time:", format(end_time, "%Y-%m-%d %H:%M:%S")))
+  print(round(difftime(end_time, start_time, units = "auto"), 1))
   
+  # return a big table with all results
+  return(par_results)
 }
 
 # uncomment this for a test run
 # recommend doing nr_it = 10 for quick run, in practice would be 5000
-# full_test_sim <- aafbf_params(param_list, nr_it = 10)
+full_test_sim <- aafbf_params_parallel(param_list, nr_it = 100)
+
+stopCluster(cl)
