@@ -49,6 +49,7 @@ aafbf_params <- function(param_list, ...) {
     sim_results[[i]] <- sim_result
   }
   
+  # return a big table with all results
   return(rbindlist(sim_results, use.names = TRUE, fill = TRUE))
   
 }
