@@ -53,4 +53,6 @@ aafbf_params <- function(param_list, ...) {
   
 }
 
-full_test_sim <- aafbf_params(param_list, nr_it = 10)
+# uncomment this for a test run
+# recommend doing nr_it = 10 for quick run, in practice would be 5000
+#full_test_sim <- aafbf_params(param_list, nr_it = 10)
