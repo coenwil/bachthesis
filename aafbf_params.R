@@ -5,7 +5,7 @@
 library(data.table)
 
 # source simPrior to get AAFBF simulation function
-source("simPrior.R")
+source("aafbf.R")
 
 # creating all combinations of parameters
 param_grid <- CJ(
@@ -56,4 +56,4 @@ aafbf_params <- function(param_list, ...) {
 
 # uncomment this for a test run
 # recommend doing nr_it = 10 for quick run, in practice would be 5000
-#full_test_sim <- aafbf_params(param_list, nr_it = 10)
+# full_test_sim <- aafbf_params(param_list, nr_it = 10)
