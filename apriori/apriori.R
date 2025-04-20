@@ -14,6 +14,16 @@ SSDlog <- function(n_min = 10, n_max = 100,
                    intercept = 0, beta_1 = 0.5,
                    nr_it = 1, pop_size = 50000) {
   
+  # generate population
+  x <- rep(c(0, 1), each = pop_size / 2)
+  
+  # generate outcome variable under alternative hypothesis
+  y_alt <- rbinom(pop_size, size = 1, prob = plogis(intercept + beta_1*x))
+  # generate y under null hypothesis (beta_1 = 0)
+  y_null <- rbinom(pop_size, size = 1, prob = plogis(intercept))
+  
+  pop_data <- data.table(x, y_alt, y_null)
+  
   # flag for the first iteration (to evaluate n_min)
   first_iter <- TRUE
   
@@ -31,16 +41,6 @@ SSDlog <- function(n_min = 10, n_max = 100,
     
     # define b for the fractional bayes factors
     b <- 1/n_mid
-    
-    # generate predictor variable
-    x <- rep(c(0, 1), each = n_mid / 2)
-    
-    # generate outcome variable under alternative hypothesis
-    y_alt <- rbinom(n_mid, size = 1, prob = plogis(intercept + beta_1*x))
-    # generate y under null hypothesis (beta_1 = 0)
-    y_null <- rbinom(n_mid, size = 1, prob = plogis(intercept))
-    
-    pop_data <- data.table(x, y_alt, y_null)
     
     # vectors to store bayes factors for this iteration
     bf_h1_vec <- numeric(t)
@@ -80,8 +80,8 @@ SSDlog <- function(n_min = 10, n_max = 100,
     }
     
     # compute probability of bayes factor being above eta
-    p_h1 <- mean(bf_h1 > bf_thresh)
-    p_h0 <- mean(bf_h0 > bf_thresh)
+    p_h1 <- mean(bf_h1_vec > bf_thresh)
+    p_h0 <- mean(bf_h0_vec > bf_thresh)
     
     # binary search; continue or stop searching
     if (p_h0 > eta && p_h1 > eta) {
@@ -103,4 +103,4 @@ SSDlog <- function(n_min = 10, n_max = 100,
   ))
 }
 
-test_prio <- SSDlog(t = 100)
+test_prio <- SSDlog(t = 10, beta_1 = 0.5, bf_thresh = 5)
