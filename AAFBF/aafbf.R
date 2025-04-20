@@ -87,7 +87,7 @@ aafbf <- function(n_start = 15, n_step = 1, max_n = 50000,
       sample_data <- pop_data[sample(nrow(pop_data), n), ]
       
       # sometimes the sample contains only 1s or 0s for x or y
-      # this causes the glm to break. handling this by skipping to the next iteration
+      # this causes the glm to break
       if (length(unique(sample_data$y)) < 2 | length(unique(sample_data$x)) < 2) {
         # increase fail count
         fail_count <- fail_count + 1
@@ -101,15 +101,13 @@ aafbf <- function(n_start = 15, n_step = 1, max_n = 50000,
         
         # get the coefficients and covariance matrix
         coefs <- coef(log_reg)["x"]
-        # multiply the covariance matrix with identity matrix 
         cov_mat <- vcov(log_reg)["x", "x"]
         
-        # computing priors and posteriors
+        # computing complexity, fit, and bayes factor
         comp <- pnorm(0, 0, b * sqrt(cov_mat))
         
         fit <- pnorm(0, coefs, sqrt(cov_mat))
         
-        # this is for the case of only inequality constraints
         bf <- bayes_factor(fit, comp)
         
         # increase sample size and do the loop again
