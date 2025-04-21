@@ -27,13 +27,17 @@ SSDlog <- function(n_min = 10, n_max = 100,
   # flag for the first iteration (to evaluate n_min)
   first_iter <- TRUE
   
+  # initialize values
+  p_h1 <- NA_real_
+  p_h0 <- NA_real_
+  
   # run until sample size is minimal while still having enough support
   while (n_max - n_min > 1) {
     
     # in the first iteration, use n_min
     if (first_iter) {
       n_mid <- n_min
-      first_pass <- FALSE
+      first_iter <- FALSE
     # after that, just do the normal binary search
     } else {
       n_mid <- floor((n_min + n_max) / 2)
@@ -46,21 +50,33 @@ SSDlog <- function(n_min = 10, n_max = 100,
     bf_h1_vec <- numeric(t)
     bf_h0_vec <- numeric(t)
     
-    # doing T iterations of the current sample size to get eta
+    # storing fail count to check proportion
+    fail_count <- 0
+    
+    # doing T iterations of the current sample size to approx. P(BF > eta)
     for (i in 1:t) {
       # sample from alternative hypothesis population
       sample_alt <- pop_data[sample(nrow(pop_data), n_mid), .(x, y = y_alt)]
       # sample from null hypothesis population
       sample_null <- pop_data[sample(nrow(pop_data), n_mid), .(x, y = y_null)]
       
+      # check if there is not only 0's or 1's sampled
+      # if yes, increase fail count and go to next iteration in T
+      if (var(sample_alt$y) == 0 || var(sample_alt$x) == 0 || 
+          var(sample_null$y) == 0 || var(sample_null$x) == 0) {
+        fail_count <- fail_count + 1
+        next
+      }
+      
       # H1 logistic regression and computing bayes factor
       logreg_h1 <- glm(y ~ x, family = "binomial", data = sample_alt)
+      print(summary(logreg_h1))
       # get the coefficients and covariance matrix
       coef_h1 <- coef(logreg_h1)["x"]
       var_h1 <- vcov(logreg_h1)["x", "x"]
       
       # computing complexity, fit, and bayes factor
-      comp_h1 <- pnorm(0, 0, b * sqrt(var_h1))
+      comp_h1 <- pnorm(0, 0, (1/b) * sqrt(var_h1))
       
       fit_h1 <- pnorm(0, coef_h1, sqrt(var_h1))
       
@@ -73,10 +89,18 @@ SSDlog <- function(n_min = 10, n_max = 100,
       logreg_h0 <- glm(y ~ x, family = "binomial", data = sample_null)
       coef_h0 <- coef(logreg_h0)["x"]
       var_h0 <- vcov(logreg_h0)["x", "x"]
-      comp_h0 <- pnorm(0, 0, b * sqrt(var_h0))
+      comp_h0 <- pnorm(0, 0, (1/b) * sqrt(var_h0))
       fit_h0 <- pnorm(0, coef_h0, sqrt(var_h0))
       bf_h0 <- bayes_factor(fit_h0, comp_h0)
       bf_h0_vec[i] <- bf_h0
+    }
+    
+    # check proportion of failures. if > 5%, not enough valid samples
+    fail_prop <- fail_count / t
+    cat("FAIL PROPORTION: ", fail_prop, "\n")
+    if (fail_prop > 0.05) {
+      n_min <- n_min + 1
+      next
     }
     
     # compute probability of bayes factor being above eta
@@ -92,15 +116,19 @@ SSDlog <- function(n_min = 10, n_max = 100,
       n_min <- n_mid
     }
   }
+  # get final value
+  n_final <- n_max
+  
   return(data.table(
-    n = n_mid,
-    p_h1 = p_h1,
-    p_h0 = p_h0,
-    bf_thresh = bf_thresh,
-    eta = eta,
-    intercept = intercept,
-    beta_1 = beta_1
+    n_final,
+    p_h1,
+    p_h0,
+    bf_thresh,
+    eta,
+    intercept,
+    beta_1,
+    fail_count
   ))
 }
 
-test_prio <- SSDlog(t = 10, beta_1 = 0.5, bf_thresh = 5)
+test_prio <- SSDlog(t = 100, beta_1 = 1, bf_thresh = 3)
