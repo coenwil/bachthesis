@@ -34,13 +34,12 @@ SSDlog <- function(n_min = 10, n_max = 100,
   # run until sample size is minimal while still having enough support
   while (n_max - n_min > 1) {
     
+    n_mid <- floor((n_min + n_max) / 2)
+    
     # in the first iteration, use n_min
     if (first_iter) {
       n_mid <- n_min
       first_iter <- FALSE
-    # after that, just do the normal binary search
-    } else {
-      n_mid <- floor((n_min + n_max) / 2)
     }
     
     # define b for the fractional bayes factors
@@ -70,15 +69,15 @@ SSDlog <- function(n_min = 10, n_max = 100,
       
       # H1 logistic regression and computing bayes factor
       logreg_h1 <- glm(y ~ x, family = "binomial", data = sample_alt)
-      print(summary(logreg_h1))
+      
       # get the coefficients and covariance matrix
       coef_h1 <- coef(logreg_h1)["x"]
       var_h1 <- vcov(logreg_h1)["x", "x"]
       
-      # computing complexity, fit, and bayes factor
+      # computing complexity, fit
       comp_h1 <- pnorm(0, 0, (1/b) * sqrt(var_h1))
       
-      fit_h1 <- pnorm(0, coef_h1, sqrt(var_h1))
+      fit_h1 <- 1 - pnorm(0, coef_h1, sqrt(var_h1))
       
       # get the bayes factor
       # store all of them in a vector to get the mean later
@@ -90,14 +89,13 @@ SSDlog <- function(n_min = 10, n_max = 100,
       coef_h0 <- coef(logreg_h0)["x"]
       var_h0 <- vcov(logreg_h0)["x", "x"]
       comp_h0 <- pnorm(0, 0, (1/b) * sqrt(var_h0))
-      fit_h0 <- pnorm(0, coef_h0, sqrt(var_h0))
+      fit_h0 <- 1 - pnorm(0, coef_h0, sqrt(var_h0))
       bf_h0 <- bayes_factor(fit_h0, comp_h0)
       bf_h0_vec[i] <- bf_h0
     }
     
     # check proportion of failures. if > 5%, not enough valid samples
     fail_prop <- fail_count / t
-    cat("FAIL PROPORTION: ", fail_prop, "\n")
     if (fail_prop > 0.05) {
       n_min <- n_min + 1
       next
@@ -106,6 +104,8 @@ SSDlog <- function(n_min = 10, n_max = 100,
     # compute probability of bayes factor being above eta
     p_h1 <- mean(bf_h1_vec > bf_thresh)
     p_h0 <- mean(bf_h0_vec > bf_thresh)
+    
+    cat("n_mid:", n_mid, "p_h1:", p_h1, "p_h0", p_h0, "\n")
     
     # binary search; continue or stop searching
     if (p_h0 > eta && p_h1 > eta) {
@@ -117,17 +117,24 @@ SSDlog <- function(n_min = 10, n_max = 100,
     }
   }
   # get final value
-  n_final <- n_max
+  n <- n_max
   
   return(data.table(
-    n_final,
+    n,
     p_h1,
     p_h0,
+    bf_h1,
+    bf_h0,
+    fit_h1,
+    fit_h0,
+    comp_h1,
+    comp_h0,
+    n_min,
+    n_max,
     bf_thresh,
     eta,
     intercept,
-    beta_1,
-    fail_count
+    beta_1
   ))
 }
 
