@@ -27,9 +27,6 @@ aafbf <- function(n_start = 15, n_step = 1, max_n = 50000,
     bf = NA_real_,
     fit = NA_real_,
     complexity = NA_real_,
-    bf_reached = NA,
-    inv_bf_reached = NA,
-    fail_count = 0,
     n_start = rep(n_start, nr_it),
     n_step = rep(n_step, nr_it),
     bf_target = rep(bf_target, nr_it),
@@ -120,8 +117,6 @@ aafbf <- function(n_start = 15, n_step = 1, max_n = 50000,
       bf = bf,
       fit = fit,
       complexity = comp,
-      bf_reached = bf >= bf_target,
-      inv_bf_reached = bf <= 1 / bf_target,
       fail_count = fail_count
     )
     
@@ -138,4 +133,4 @@ aafbf <- function(n_start = 15, n_step = 1, max_n = 50000,
 }
 
 # uncomment and run this for a test run
-#test_results <- aafbf(bf_target = 20, nr_it = 500)
+test_results <- aafbf(bf_target = 20, nr_it = 500)
