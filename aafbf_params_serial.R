@@ -4,17 +4,16 @@
 # also use data.table here for speed advantage
 library(data.table)
 
-# source aafbf.R to get AAFBF simulation function
+# source simPrior to get AAFBF simulation function
 source("aafbf.R")
 
 # creating all combinations of parameters
-param_grid_aafbf <- CJ(
+param_grid <- CJ(
   n_start   = c(5, 15, 50),
   n_step    = c(1, 2, 5),
-  max_n     = c(100, 1000),
-  bf_target = c(3, 5, 20),
-  beta_1    = c(0, 0.5, 1),
-  intercept = c(-2, 0, 1)
+  bf_target = c(5, 10, 20),
+  beta_1    = c(0, 0.25, 0.5, 0.75),
+  intercept = c(-0.5, 0, 0.5)
 )
 
 # creating a list out of  every row in param_grid
