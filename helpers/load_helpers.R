@@ -2,7 +2,7 @@
 
 # list all files in this directory
 helper_files <- list.files(
-  path = ".", 
+  path = "helpers", 
   pattern = "\\.R$", 
   full.names = TRUE
 )
