@@ -4,7 +4,7 @@
 # also use data.table here for speed advantage
 library(data.table)
 
-# source aafbf.R to get AAFBF simulation function
+# source sequential AAFBF simulation script
 source("aafbf.R")
 
 # creating all combinations of parameters
