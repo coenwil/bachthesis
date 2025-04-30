@@ -4,14 +4,15 @@
 # for faster data storage and manipulation
 library(data.table)
 
-# making a helper function to compute bayes factor
-bayes_factor <- function(fit, complexity) {
-  (fit/complexity) / ((1 - fit) / (1 - complexity))
-}
+# source helpers
+# for computing fit, complexity, and bayes factor
+source("helpers/load_helpers.R")
 
 SSDlog <- function(n_min = 10, n_max = 100, 
                    bf_thresh = 5, eta = 0.8, t = 10000,
                    intercept = 0, beta_1 = 0.5,
+                   delta = 0, 
+                   hypothesis = c("superiority", "non-inferiority", "equivalence"),
                    nr_it = 1, pop_size = 50000) {
   
   # generate population
@@ -75,9 +76,9 @@ SSDlog <- function(n_min = 10, n_max = 100,
       var_h1 <- vcov(logreg_h1)["x", "x"]
       
       # computing complexity, fit
-      comp_h1 <- pnorm(0, 0, (1/b) * sqrt(var_h1))
+      comp_h1 <- compute_complexity(hypothesis, delta, var = var_h1, b)
       
-      fit_h1 <- 1 - pnorm(0, coef_h1, sqrt(var_h1))
+      fit_h1 <- compute_fit(hypothesis, delta, coef = coef_h1, var = var_h1)
       
       # get the bayes factor
       # store all of them in a vector to get the mean later
@@ -88,8 +89,8 @@ SSDlog <- function(n_min = 10, n_max = 100,
       logreg_h0 <- glm(y ~ x, family = "binomial", data = sample_null)
       coef_h0 <- coef(logreg_h0)["x"]
       var_h0 <- vcov(logreg_h0)["x", "x"]
-      comp_h0 <- pnorm(0, 0, (1/b) * sqrt(var_h0))
-      fit_h0 <- 1 - pnorm(0, coef_h0, sqrt(var_h0))
+      comp_h0 <- compute_complexity(hypothesis, delta, var = var_h0, b)
+      fit_h0 <- compute_fit(hypothesis, delta, coef = coef_h0, var = var_h0)
       bf_h0 <- bayes_factor(fit_h0, comp_h0)
       bf_h0_vec[i] <- bf_h0
     }
@@ -97,6 +98,7 @@ SSDlog <- function(n_min = 10, n_max = 100,
     # check proportion of failures. if > 5%, not enough valid samples
     fail_prop <- fail_count / t
     if (fail_prop > 0.05) {
+      warning("More than 5% of samples had no variance! Retrying with n + 1")
       n_min <- n_min + 1
       next
     }
@@ -134,8 +136,10 @@ SSDlog <- function(n_min = 10, n_max = 100,
     bf_thresh,
     eta,
     intercept,
-    beta_1
+    beta_1,
+    hypothesis,
+    delta
   ))
 }
 
-test_prio <- SSDlog(t = 100, beta_1 = 1, bf_thresh = 3)
+test_prio <- SSDlog(t = 100, beta_1 = 1, bf_thresh = 3, hypothesis = "superiority")
