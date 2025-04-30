@@ -1,16 +1,11 @@
-# computing priors and posteriors manually
+# function to determine sample size sequentially using bayes factors
 
 # for faster storage of data
 library(data.table)
 
-# simulating data with only dichotomous predictor (intervention)
-set.seed(123456)
-
-
-# making a helper function to compute bayes factor
-bayes_factor <- function(fit, complexity) {
-  (fit/complexity) / ((1 - fit) / (1 - complexity))
-}
+# source helpers
+# for computing fit, complexity, and bayes factor
+source("helpers/load_helpers.R")
 
 aafbf <- function(n_start = 15, n_step = 1, max_n = 50000, 
                   bf_target = 5, beta_1 = 0.5, intercept = 0,
