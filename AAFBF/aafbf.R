@@ -9,6 +9,8 @@ source("helpers/load_helpers.R")
 
 aafbf <- function(n_start = 15, n_step = 1, max_n = 50000, 
                   bf_target = 5, beta_1 = 0.5, intercept = 0,
+                  delta = 0, 
+                  hypothesis = c("superiority", "non-inferiority", "equivalence"),
                   pop_size = 50000, nr_it = 5000) {
   
   # give starting time
@@ -96,9 +98,9 @@ aafbf <- function(n_start = 15, n_step = 1, max_n = 50000,
         cov_mat <- vcov(log_reg)["x", "x"]
         
         # computing complexity, fit, and bayes factor
-        comp <- pnorm(0, 0, b * sqrt(cov_mat))
+        comp <- compute_complexity(hypothesis, delta, var = cov_mat, b)
         
-        fit <- pnorm(0, coefs, sqrt(cov_mat))
+        fit <- compute_fit(hypothesis, delta, coef = coefs, var = cov_mat)
         
         bf <- bayes_factor(fit, comp)
         
