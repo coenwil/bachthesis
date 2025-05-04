@@ -23,7 +23,7 @@ param_list <- lapply(1:nrow(param_grid), function(x) as.list(param_grid[x]))
 
 
 # function to loop over all parameters
-aafbf_params_serial <- function(param_list, ...) {
+aafbf_params <- function(param_list, ...) {
   
   # get a list with the extra arguments (to modify nr_it)
   extra_args <- list(...)
@@ -43,7 +43,7 @@ aafbf_params_serial <- function(param_list, ...) {
     # run aafbf() with current parameters and store results
     sim_result <- do.call(aafbf, params)
     
-    # add sim ID for tracing (future: make codes)
+    # add sim ID for tracing (TODO: make codes)
     sim_result[, sim_id := i]
     
     # store this 
