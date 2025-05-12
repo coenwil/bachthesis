@@ -21,7 +21,7 @@ SSDlog <- function(n_min = 10, n_max = 100,
   # generate outcome variable under alternative hypothesis
   y_alt <- rbinom(pop_size, size = 1, prob = plogis(intercept + beta_1*x))
   # generate y under null hypothesis (beta_1 = 0)
-  y_null <- rbinom(pop_size, size = 1, prob = plogis(intercept))
+  y_null <- rbinom(pop_size, size = 1, prob = plogis(intercept + -beta_1*x))
   
   pop_data <- data.table(x, y_alt, y_null)
   
@@ -105,7 +105,7 @@ SSDlog <- function(n_min = 10, n_max = 100,
     
     # compute probability of bayes factor being above eta
     p_h1 <- mean(bf_h1_vec > bf_thresh)
-    p_h0 <- mean(bf_h0_vec > bf_thresh)
+    p_h0 <- mean((1 / bf_h0_vec) > bf_thresh)
     
     cat("n_mid:", n_mid, "p_h1:", p_h1, "p_h0", p_h0, "\n")
     
@@ -142,4 +142,4 @@ SSDlog <- function(n_min = 10, n_max = 100,
   ))
 }
 
-test_prio <- SSDlog(t = 100, beta_1 = 1, bf_thresh = 3, hypothesis = "superiority")
+test_prio <- SSDlog(t = 100, beta_1 = 1, bf_thresh = 5, hypothesis = "superiority")
