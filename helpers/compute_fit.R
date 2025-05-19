@@ -15,8 +15,8 @@ compute_fit <- function(hypothesis = c("superiority", "non-inferiority", "equiva
   }
   
   if (hypothesis == "equivalence") {
-    return(pnorm(delta, mean = coef, sd = sqrt(var)) -
-             pnorm(-delta, mean = coef, sd = sqrt(var)))
+    return(pnorm(delta, mean = coef, sd = sqrt(var), lower.tail = TRUE) -
+             pnorm(-delta, mean = coef, sd = sqrt(var), lower.tail = TRUE))
   }
   
 }
