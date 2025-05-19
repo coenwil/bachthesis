@@ -11,7 +11,7 @@ compute_complexity <- function(hypothesis = c("superiority", "non-inferiority", 
   }
   
   if (hypothesis == "non-inferiority") {
-    return(pnorm(delta, mean = 0, sd = (1/b) * sqrt(var), lower.tail = FALSE))
+    return(pnorm(delta, mean = delta, sd = (1/b) * sqrt(var), lower.tail = FALSE))
   }
   
   if (hypothesis == "equivalence") {
