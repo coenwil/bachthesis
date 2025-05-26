@@ -17,6 +17,9 @@ aafbf <- function(n_start = 15, n_step = 1, max_n = 50000,
   start_time <- Sys.time()
   print(paste("Start time:", format(start_time, "%Y-%m-%d %H:%M:%S")))
   
+  # ensure hypothesis argument can be used
+  hypothesis <- match.arg(hypothesis)
+  
   # initiate results table
   results <- data.table(
     iteration = 1:nr_it,
@@ -28,7 +31,8 @@ aafbf <- function(n_start = 15, n_step = 1, max_n = 50000,
     n_step = rep(n_step, nr_it),
     bf_target = rep(bf_target, nr_it),
     intercept = rep(intercept, nr_it),
-    beta_1 = rep(beta_1, nr_it)
+    beta_1 = rep(beta_1, nr_it),
+    hypothesis = rep(hypothesis, nr_it)
   )
   
   # generate predictor variable

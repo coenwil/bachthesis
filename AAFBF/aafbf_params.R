@@ -5,21 +5,26 @@
 library(data.table)
 
 # source sequential AAFBF simulation script
-source("aafbf.R")
+source("AAFBF/aafbf.R")
 
 # creating all combinations of parameters
-param_grid_aafbf <- CJ(
-  n_start   = c(5, 15, 50),
-  n_step    = c(1, 2, 5),
-  max_n     = c(100, 1000),
-  bf_target = c(3, 5, 20),
-  beta_1    = c(0, 0.5, 1),
-  intercept = c(-2, 0, 1)
+param_grid_seq_test <- CJ(
+  n_start = c(10, 50),
+  n_step = c(1, 4),
+  max_n = 1000,
+  bf_target = c(5, 10),
+  intercept = -1, # duplaga
+  beta_1 = c(0, 1),
+  hypothesis = c("superiority", "non-inferiority", "equivalence"),
+  nr_it = 5000
 )
+
+# 48 parameter sets
+nrow(param_grid_seq_test)
 
 # creating a list out of  every row in param_grid
 # this means we have a list of lists that contain parameter sets
-param_list <- lapply(1:nrow(param_grid), function(x) as.list(param_grid[x]))
+param_list <- lapply(1:nrow(param_grid_seq_test), function(x) as.list(param_grid_seq_test[x]))
 
 
 # function to loop over all parameters
@@ -57,4 +62,4 @@ aafbf_params <- function(param_list, ...) {
 
 # uncomment this for a test run
 # recommend doing nr_it = 10 for quick run, in practice would be 5000
-full_test_sim <- aafbf_params_serial(param_list, nr_it = 10)
+full_test_sim <- aafbf_params(param_list)
