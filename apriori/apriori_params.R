@@ -7,21 +7,38 @@ library(data.table)
 # source sample size computation function
 source("apriori/apriori.R")
 
-# all relevant parameters
-# cross product, so all combinations get tested
-param_grid_apriori <- CJ(
-  n_min     = c(10, 30),
-  n_max     = c(100, 1000),
-  bf_thresh = c(3, 5, 20),
-  beta_1    = c(0, 0.5, 1),
-  intercept = c(-2, 0, 1),
-  t         = 100,
-  eta       = c(0.8, 0.9)
+# parameters that go together
+fixed_params_prio <- data.table(
+  n_min = c(10, 50),
+  n_max = c(100, 1000)
 )
+
+# parameters that should vary across all combinations
+free_params_prio <- CJ(
+  bf_thresh = c(5, 10),
+  eta = c(0.8, 0.9),
+  intercept = -1, # duplaga
+  beta_1 = c(0, 1),
+  hypothesis = c("superiority", "non-inferiority", "equivalence"),
+  t = 10000
+)
+
+# giving each a dummy to join on
+fixed_params_prio[, dummy := TRUE]
+free_params_prio[, dummy := TRUE]
+
+# joining on dummy
+param_grid_prio_test <- free_params_prio[fixed_params_prio, on = .(dummy), allow.cartesian = TRUE]
+
+# removing dummy column
+param_grid_prio_test[, dummy := NULL]
+
+# 48 parameter sets
+nrow(param_grid_prio_test)
 
 # creating a list out of  every row in param_grid
 # this means we have a list of lists that contain parameter sets
-param_list_apriori <- lapply(1:nrow(param_grid_apriori), function(x) as.list(param_grid_apriori[x]))
+param_list_apriori <- lapply(1:nrow(param_grid_prio_test), function(x) as.list(param_grid_prio_test[x]))
 
 
 # function to loop over all parameters
@@ -59,4 +76,4 @@ apriori_params <- function(param_list_apriori, ...) {
 
 # uncomment this for a test run
 # recommend doing t = 100 for quick run, in practice would be 10000
-full_test_sim <- apriori_params(param_list_apriori, t = 100)
+full_test_sim_prio <- apriori_params(param_list_apriori)

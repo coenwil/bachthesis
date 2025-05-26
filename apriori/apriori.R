@@ -13,7 +13,10 @@ SSDlog <- function(n_min = 10, n_max = 100,
                    intercept = 0, beta_1 = 0.5,
                    delta = 0, 
                    hypothesis = c("superiority", "non-inferiority", "equivalence"),
-                   nr_it = 1, pop_size = 50000) {
+                   pop_size = 50000) {
+  
+  # ensure hypothesis argument can be used
+  hypothesis <- match.arg(hypothesis)
   
   # generate population
   x <- rep(c(0, 1), each = pop_size / 2)
@@ -142,4 +145,4 @@ SSDlog <- function(n_min = 10, n_max = 100,
   ))
 }
 
-test_prio <- SSDlog(t = 100, beta_1 = 1, bf_thresh = 5, hypothesis = "superiority")
+#test_prio <- SSDlog(t = 1000, beta_1 = .1, bf_thresh = 5, hypothesis = "equivalence", delta = .05)
