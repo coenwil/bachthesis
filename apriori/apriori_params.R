@@ -19,6 +19,7 @@ free_params_prio <- CJ(
   eta = c(0.8, 0.9),
   intercept = -1, # duplaga
   beta_1 = c(0, 1),
+  delta = 0.3,
   hypothesis = c("superiority", "non-inferiority", "equivalence"),
   t = 10000
 )

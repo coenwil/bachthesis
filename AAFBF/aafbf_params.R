@@ -16,6 +16,7 @@ param_grid_seq_test <- CJ(
   intercept = -1, # duplaga
   beta_1 = c(0, 1),
   hypothesis = c("superiority", "non-inferiority", "equivalence"),
+  delta = 0.3,
   nr_it = 5000
 )
 
