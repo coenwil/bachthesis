@@ -34,6 +34,7 @@ SSDlog <- function(n_min = 10, n_max = 100,
   # initialize values
   p_h1 <- NA_real_
   p_h0 <- NA_real_
+  prop_fail <- 0
   
   # run until sample size is minimal while still having enough support
   while (n_max - n_min > 1) {
@@ -103,6 +104,7 @@ SSDlog <- function(n_min = 10, n_max = 100,
     if (fail_prop > 0.05) {
       warning("More than 5% of samples had no variance! Retrying with n + 1")
       n_min <- n_min + 1
+      prop_fail <- prop_fail + 1
       next
     }
     
@@ -141,7 +143,8 @@ SSDlog <- function(n_min = 10, n_max = 100,
     intercept,
     beta_1,
     hypothesis,
-    delta
+    delta,
+    prop_fail
   ))
 }
 
