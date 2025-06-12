@@ -6,6 +6,7 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(patchwork)
+library(stringr)
 
 # loading in sequential simulation data
 seq_sim <- fread("analysis/seq_sim.csv")
@@ -56,14 +57,14 @@ cv_summary <- seq_grouped %>%
     .groups = "drop"
   )
 
-# BF means, full range
+# plot of BF means, full range
 bf_fullrange_plot <- ggplot(seq_grouped, aes(x = bf_mean)) +
   geom_density(fill = "grey", alpha = 0.6) +
   labs(x = "AAFBF mean",
        y = "Density") +
   theme_classic()
 
-# BF means, range 0-10
+# plot BF means, range 0-10
 bf_constrained_plot <- seq_grouped %>%
   filter(bf_mean >= 0, bf_mean <= 10) %>%
   ggplot(aes(x = bf_mean)) +
@@ -72,3 +73,20 @@ bf_constrained_plot <- seq_grouped %>%
   theme_classic()
 
 (bf_plot <- (bf_fullrange_plot | bf_constrained_plot))
+
+# seeing how often the sequential design found support when it should
+# extracting parameters from sim_code
+seq_grouped <- seq_grouped %>%
+  mutate(
+    hyp = str_extract(sim_code, "hyp=[^_]+"),
+    hyp = str_remove(hyp, "hyp="),
+    
+    b1 = str_extract(sim_code, "b1=\\d+"),
+    b1 = as.numeric(str_remove(b1, "b1=")),
+    
+    correct = case_when(
+      (hyp %in% c("non-inferiority", "superiority") & b1 == 1) ~ 1,
+      (hyp == "equivalence" & b1 == 0) ~ 1,
+      TRUE ~ 0
+    )
+  )
