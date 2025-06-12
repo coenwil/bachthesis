@@ -7,7 +7,7 @@ library(data.table)
 # for computing fit, complexity, and bayes factor
 source("helpers/load_helpers.R")
 
-aafbf <- function(n_start = 15, n_step = 1, max_n = 50000, 
+seqSSD <- function(n_start = 15, n_step = 1, max_n = 50000, 
                   bf_target = 5, beta_1 = 0.5, intercept = 0,
                   delta = 0, 
                   hypothesis = c("superiority", "non-inferiority", "equivalence"),
@@ -32,6 +32,7 @@ aafbf <- function(n_start = 15, n_step = 1, max_n = 50000,
     bf_target = rep(bf_target, nr_it),
     intercept = rep(intercept, nr_it),
     beta_1 = rep(beta_1, nr_it),
+    delta = rep(delta, nr_it),
     hypothesis = rep(hypothesis, nr_it)
   )
   
@@ -134,4 +135,4 @@ aafbf <- function(n_start = 15, n_step = 1, max_n = 50000,
 }
 
 # uncomment and run this for a test run
-test_results <- aafbf(bf_target = 20, nr_it = 500)
+test_results <- seqSSD(bf_target = 20, nr_it = 500)

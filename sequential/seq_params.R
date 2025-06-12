@@ -5,7 +5,7 @@
 library(data.table)
 
 # source sequential AAFBF simulation script
-source("AAFBF/aafbf.R")
+source("sequential/seq.R")
 
 # creating all combinations of parameters
 param_grid_seq_test <- CJ(
@@ -29,7 +29,7 @@ param_list <- lapply(1:nrow(param_grid_seq_test), function(x) as.list(param_grid
 
 
 # function to loop over all parameters
-aafbf_params <- function(param_list, ...) {
+seq_params <- function(param_list, ...) {
   
   # get a list with the extra arguments (to modify nr_it)
   extra_args <- list(...)
@@ -47,7 +47,7 @@ aafbf_params <- function(param_list, ...) {
     params <- modifyList(param_list[[i]], extra_args)
     
     # run aafbf() with current parameters and store results
-    sim_result <- do.call(aafbf, params)
+    sim_result <- do.call(seqSSD, params)
     
     # add sim ID for tracing (TODO: make codes)
     sim_result[, sim_id := i]
@@ -63,4 +63,7 @@ aafbf_params <- function(param_list, ...) {
 
 # uncomment this for a test run
 # recommend doing nr_it = 10 for quick run, in practice would be 5000
-full_test_sim <- aafbf_params(param_list)
+full_seq_sim <- seq_params(param_list)
+
+# convert to .csv and place in analysis folder for github
+fwrite(full_seq_sim, "analysis/seq_sim.csv")
