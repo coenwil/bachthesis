@@ -3,6 +3,9 @@
 # packages
 library(data.table)
 library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(patchwork)
 
 # loading in sequential simulation data
 seq_sim <- fread("analysis/seq_sim.csv")
@@ -11,7 +14,7 @@ seq_sim <- fread("analysis/seq_sim.csv")
 seq_sim <- seq_sim[,-1]
 
 # variables that are important for analysis
-result_vars <- c("n", "bf", "fit", "complexity")
+result_vars <- c("n", "bf", "fit")
 # the other ones are constants
 constant_vars <- setdiff(names(seq_sim), result_vars)
 
@@ -41,3 +44,31 @@ sim_code_lookup <- seq_sim %>%
 
 seq_grouped <- seq_grouped %>%
   left_join(sim_code_lookup, by = "sim_id")
+
+# table to show mean and sd of CVs of variables of interest
+cv_summary <- seq_grouped %>%
+  select(sim_id, n_cv, bf_cv, fit_cv) %>%
+  pivot_longer(cols = -sim_id, names_to = "variable", values_to = "cv") %>%
+  group_by(variable) %>%
+  summarise(
+    mean_cv = mean(cv),
+    sd_cv = sd(cv),
+    .groups = "drop"
+  )
+
+# BF means, full range
+bf_fullrange_plot <- ggplot(seq_grouped, aes(x = bf_mean)) +
+  geom_density(fill = "grey", alpha = 0.6) +
+  labs(x = "AAFBF mean",
+       y = "Density") +
+  theme_classic()
+
+# BF means, range 0-10
+bf_constrained_plot <- seq_grouped %>%
+  filter(bf_mean >= 0, bf_mean <= 10) %>%
+  ggplot(aes(x = bf_mean)) +
+  geom_density(fill = "grey", alpha = 0.6) +
+  labs(x = "AAFBF mean (range 0–10)", y = "") +
+  theme_classic()
+
+(bf_plot <- (bf_fullrange_plot | bf_constrained_plot))
