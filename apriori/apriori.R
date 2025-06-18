@@ -154,5 +154,3 @@ SSDlog <- function(n_min = 10, n_max = 100,
     prop_fail
   ))
 }
-
-test_prio <- SSDlog(t = 100, beta_1 = 0, bf_thresh = 5, hypothesis = "equivalence", delta = .3)
