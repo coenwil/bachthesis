@@ -23,24 +23,26 @@ SSDlog <- function(n_min = 10, n_max = 100,
   
   # generate outcome variable under alternative hypothesis
   y_alt <- rbinom(pop_size, size = 1, prob = plogis(intercept + beta_1*x))
-  # generate y under null hypothesis (beta_1 = 0)
-  y_null <- if (hypothesis %in% c("superiority", "non-inferiority")) {
+  
+  # generate y under complement hypothesis
+  y_comp <- if (hypothesis %in% c("superiority", "non-inferiority")) {
     rbinom(pop_size, size = 1, prob = plogis(intercept + -beta_1*x))
-  # the beta for the null (=complement) hypothesis gets randomly selected from the range [0.3, 10]
-  # this is to reflect the fact that the complement of the equivalence trial can be anything
+  } 
+  # the beta for the complement hypothesis in the equivalence trial gets randomly selected from the range [0.3, 10]
+  # this is to reflect the fact that it can be anything
   # as long as it's not in -delta, delta. 10 seems like a reasonable upper limit.
-  } else if (hypothesis == "equivalence") {
-    beta_null <- runif(1, min = delta, max = 10)
-    rbinom(pop_size, size = 1, prob = plogis(intercept + (beta_null*x)))
+  else if (hypothesis == "equivalence") {
+    beta_comp <- runif(1, min = delta, max = 10)
+    rbinom(pop_size, size = 1, prob = plogis(intercept + (beta_comp*x)))
   }
-  pop_data <- data.table(x, y_alt, y_null)
+  pop_data <- data.table(x, y_alt, y_comp)
   
   # flag for the first iteration (to evaluate n_min)
   first_iter <- TRUE
   
   # initialize values
   p_h1 <- NA_real_
-  p_h0 <- NA_real_
+  p_hc <- NA_real_
   prop_fail <- 0
   
   # run until sample size is minimal while still having enough support
@@ -59,7 +61,7 @@ SSDlog <- function(n_min = 10, n_max = 100,
     
     # vectors to store bayes factors for this iteration
     bf_h1_vec <- numeric(t)
-    bf_h0_vec <- numeric(t)
+    bf_hc_vec <- numeric(t)
     
     # storing fail count to check proportion
     fail_count <- 0
@@ -68,13 +70,13 @@ SSDlog <- function(n_min = 10, n_max = 100,
     for (i in 1:t) {
       # sample from alternative hypothesis population
       sample_alt <- pop_data[sample(nrow(pop_data), n_mid), .(x, y = y_alt)]
-      # sample from null hypothesis population
-      sample_null <- pop_data[sample(nrow(pop_data), n_mid), .(x, y = y_null)]
+      # sample from comp hypothesis population
+      sample_comp <- pop_data[sample(nrow(pop_data), n_mid), .(x, y = y_comp)]
       
       # check if there is not only 0's or 1's sampled
       # if yes, increase fail count and go to next iteration in T
       if (var(sample_alt$y) == 0 || var(sample_alt$x) == 0 || 
-          var(sample_null$y) == 0 || var(sample_null$x) == 0) {
+          var(sample_comp$y) == 0 || var(sample_comp$x) == 0) {
         fail_count <- fail_count + 1
         next
       }
@@ -94,14 +96,14 @@ SSDlog <- function(n_min = 10, n_max = 100,
       bf_h1 <- bayes_factor(fit_h1, comp_h1)
       bf_h1_vec[i] <- bf_h1
       
-      # H0 logistic regression and computing bayes factor
-      logreg_h0 <- glm(y ~ x, family = "binomial", data = sample_null)
-      coef_h0 <- coef(logreg_h0)["x"]
-      var_h0 <- vcov(logreg_h0)["x", "x"]
-      comp_h0 <- compute_complexity(hypothesis, delta, var = var_h0, b)
-      fit_h0 <- compute_fit(hypothesis, delta, coef = coef_h0, var = var_h0)
-      bf_h0 <- bayes_factor(fit_h0, comp_h0)
-      bf_h0_vec[i] <- bf_h0
+      # HC logistic regression and computing bayes factor
+      logreg_hc <- glm(y ~ x, family = "binomial", data = sample_null)
+      coef_hc <- coef(logreg_hc)["x"]
+      var_hc <- vcov(logreg_hc)["x", "x"]
+      comp_hc <- compute_complexity(hypothesis, delta, var = var_hc, b)
+      fit_hc <- compute_fit(hypothesis, delta, coef = coef_hc, var = var_hc)
+      bf_hc <- bayes_factor(fit_hc, comp_hc)
+      bf_hc_vec[i] <- bf_hc
     }
     
     # check proportion of failures. if > 5%, not enough valid samples
@@ -115,12 +117,12 @@ SSDlog <- function(n_min = 10, n_max = 100,
     
     # compute probability of bayes factor being above eta
     p_h1 <- mean(bf_h1_vec > bf_thresh)
-    p_h0 <- mean(bf_h0_vec > bf_thresh)
+    p_hc <- mean(bf_hc_vec > bf_thresh)
     
-    cat("n_mid:", n_mid, "p_h1:", p_h1, "p_h0", p_h0, "\n")
+    cat("n_mid:", n_mid, "p_h1:", p_h1, "p_hc", p_hc, "\n")
     
     # binary search; continue or stop searching
-    if (p_h0 > eta && p_h1 > eta) {
+    if (p_hc > eta && p_h1 > eta) {
       # if support is 'too much', do lower sample size
       n_max <- n_mid
     } else {
@@ -134,13 +136,13 @@ SSDlog <- function(n_min = 10, n_max = 100,
   return(data.table(
     n,
     p_h1,
-    p_h0,
+    p_hc,
     bf_h1,
-    bf_h0,
+    bf_hc,
     fit_h1,
-    fit_h0,
+    fit_hc,
     comp_h1,
-    comp_h0,
+    comp_hc,
     n_min,
     n_max,
     bf_thresh,
