@@ -133,6 +133,3 @@ seqSSD <- function(n_start = 15, n_step = 1, max_n = 50000,
   
   return(results)
 }
-
-# uncomment and run this for a test run
-test_results <- seqSSD(bf_target = 20, nr_it = 500)
