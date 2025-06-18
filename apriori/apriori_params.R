@@ -75,4 +75,6 @@ apriori_params <- function(param_list_apriori, ...) {
   
 }
 
-full_test_sim_prio <- apriori_params(param_list_apriori)
+full_apriori_sim <- apriori_params(param_list_apriori)
+
+fwrite(full_apriori_sim, "apriori_sim.csv")
