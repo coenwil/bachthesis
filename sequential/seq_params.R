@@ -4,7 +4,7 @@
 # also use data.table here for speed advantage
 library(data.table)
 
-# source sequential AAFBF simulation script
+# source sequential simulation script
 source("sequential/seq.R")
 
 # creating all combinations of parameters
@@ -63,7 +63,7 @@ seq_params <- function(param_list, ...) {
 
 # uncomment this for a test run
 # recommend doing nr_it = 10 for quick run, in practice would be 5000
-full_seq_sim <- seq_params(param_list)
+full_seq_sim <- seq_params(param_list, nr_it = 10)
 
 # convert to .csv and place in analysis folder for github
 fwrite(full_seq_sim, "analysis/seq_sim.csv")
