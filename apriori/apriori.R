@@ -97,7 +97,7 @@ SSDlog <- function(n_min = 10, n_max = 100,
       bf_h1_vec[i] <- bf_h1
       
       # HC logistic regression and computing bayes factor
-      logreg_hc <- glm(y ~ x, family = "binomial", data = sample_null)
+      logreg_hc <- glm(y ~ x, family = "binomial", data = sample_comp)
       coef_hc <- coef(logreg_hc)["x"]
       var_hc <- vcov(logreg_hc)["x", "x"]
       comp_hc <- compute_complexity(hypothesis, delta, var = var_hc, b)
