@@ -60,10 +60,10 @@ apriori_params <- function(param_list_apriori, ...) {
     # get the current parameter set and the optional extra args in ...
     params <- modifyList(param_list_apriori[[i]], extra_args)
     
-    # run aafbf() with current parameters and store results
+    # run SSDlog with current parameters and store results
     sim_result_apriori <- do.call(SSDlog, params)
     
-    # add sim ID for tracing (TODO: make codes)
+    # add sim ID for tracing
     sim_result_apriori[, sim_id := i]
     
     # store this 
@@ -75,6 +75,4 @@ apriori_params <- function(param_list_apriori, ...) {
   
 }
 
-# uncomment this for a test run
-# recommend doing t = 100 for quick run, in practice would be 10000
 full_test_sim_prio <- apriori_params(param_list_apriori)
