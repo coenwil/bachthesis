@@ -24,8 +24,11 @@ SSDlog <- function(n_min = 10, n_max = 100,
   # generate outcome variable under alternative hypothesis
   y_alt <- rbinom(pop_size, size = 1, prob = plogis(intercept + beta_1*x))
   # generate y under null hypothesis (beta_1 = 0)
-  y_null <- rbinom(pop_size, size = 1, prob = plogis(intercept + -beta_1*x))
-  
+  y_null <- if (hypothesis %in% c("superiority", "non-inferiority")) {
+    rbinom(pop_size, size = 1, prob = plogis(intercept + -beta_1*x))
+  } else if (hypothesis == "equivalence") {
+    rbinom(pop_size, size = 1, prob = plogis(intercept + (2*delta*x)))
+  }
   pop_data <- data.table(x, y_alt, y_null)
   
   # flag for the first iteration (to evaluate n_min)
@@ -148,4 +151,4 @@ SSDlog <- function(n_min = 10, n_max = 100,
   ))
 }
 
-#test_prio <- SSDlog(t = 1000, beta_1 = .1, bf_thresh = 5, hypothesis = "equivalence", delta = .05)
+test_prio <- SSDlog(t = 100, beta_1 = 0, bf_thresh = 5, hypothesis = "equivalence", delta = .3)
