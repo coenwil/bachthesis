@@ -1,11 +1,7 @@
-# looping over different parameter sets
-# for computing sample sizes a priori
-# serial design, parallel script was used to generate the data
-
-# data.table for speed
+# parallelized version to conduct simulations for a priori method
 library(data.table)
+library(parallel)
 
-# source sample size computation function
 source("apriori/apriori.R")
 
 # parameters that go together
@@ -42,40 +38,49 @@ nrow(param_grid_prio_test)
 # this means we have a list of lists that contain parameter sets
 param_list_apriori <- lapply(1:nrow(param_grid_prio_test), function(x) as.list(param_grid_prio_test[x]))
 
-
-# function to loop over all parameters
-apriori_params <- function(param_list_apriori, ...) {
+apriori_params_parallel <- function(param_list_apriori, n_cores = NULL, ...) {
   
-  # get a list with the extra arguments (to modify nr_it)
-  extra_args <- list(...)
-  
-  # initiate empty list to store results
-  # (this is a more memory efficient way of doing sim_results <- list() )
-  sim_results_apriori <- vector("list", length(param_list_apriori))
-  
-  for (i in seq_along(param_list_apriori)) {
-    
-    # print progress
-    message(sprintf("Running simulation %d of %d", i, length(param_list_apriori)))
-    
-    # get the current parameter set and the optional extra args in ...
-    params <- modifyList(param_list_apriori[[i]], extra_args)
-    
-    # run SSDlog with current parameters and store results
-    sim_result_apriori <- do.call(SSDlog, params)
-    
-    # add sim ID for tracing
-    sim_result_apriori[, sim_id := i]
-    
-    # store this 
-    sim_results_apriori[[i]] <- sim_result_apriori
+  # set cores
+  if (is.null(n_cores)) {
+    n_cores <- detectCores() - 2
   }
   
-  # return a big table with all results
-  return(rbindlist(sim_results_apriori, use.names = TRUE, fill = TRUE))
+  cat("Using", n_cores, "cores for", length(param_list_apriori), "parameter sets\n")
   
+  # create cluster
+  cl <- makeCluster(n_cores)
+  
+  # load packages and helper files for each worker
+  clusterEvalQ(cl, {
+    library(data.table)
+    source("helpers/load_helpers.R")
+    source("apriori/apriori.R")
+  })
+  
+  # get extra arguments
+  extra_args <- list(...)
+  
+  # every worker gets 1 param set
+  sim_results_apriori <- parLapply(cl, 1:length(param_list_apriori), function(i) {
+    
+    # get current parameter set and merge with extra args
+    params <- modifyList(param_list_apriori[[i]], extra_args)
+    
+    # run SSDlog function
+    sim_result_apriori <- do.call(SSDlog, params)
+    
+    # dd sim ID   
+    sim_result_apriori[, sim_id := i]
+    
+    return(sim_result_apriori)
+  })
+  
+  stopCluster(cl)
+  
+  # combine  results
+  return(rbindlist(sim_results_apriori, use.names = TRUE, fill = TRUE))
 }
 
-#full_apriori_sim <- apriori_params(param_list_apriori)
+full_apriori_sim_parallel <- apriori_params_parallel(param_list_apriori, n_cores = NULL, t = 100)
 
-#fwrite(full_apriori_sim, "apriori_sim.csv")
+fwrite(full_apriori_sim, "apriori_sim.csv")
