@@ -63,7 +63,7 @@ seq_params <- function(param_list, ...) {
 
 # uncomment this for a test run
 # recommend doing nr_it = 10 for quick run, in practice would be 5000
-full_seq_sim <- seq_params(param_list, nr_it = 10)
+full_seq_sim <- seq_params(param_list)
 
 # convert to .csv and place in analysis folder for github
 fwrite(full_seq_sim, "analysis/seq_sim.csv")
