@@ -1,4 +1,5 @@
 # parallelized version to conduct simulations for a priori method
+# this is the script that was to generate the data in the end
 library(data.table)
 library(parallel)
 
@@ -81,6 +82,7 @@ apriori_params_parallel <- function(param_list_apriori, n_cores = NULL, ...) {
   return(rbindlist(sim_results_apriori, use.names = TRUE, fill = TRUE))
 }
 
-full_apriori_sim_parallel <- apriori_params_parallel(param_list_apriori, n_cores = NULL, t = 100)
+full_apriori_sim <- apriori_params_parallel(param_list_apriori, n_cores = NULL)
 
-fwrite(full_apriori_sim, "apriori_sim.csv")
+fwrite(full_apriori_sim, "analysis/apriori_sim_parallel.csv")
+
