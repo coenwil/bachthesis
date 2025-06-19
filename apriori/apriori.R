@@ -117,7 +117,7 @@ SSDlog <- function(n_min = 10, n_max = 100,
     
     # compute probability of bayes factor being above eta
     p_h1 <- mean(bf_h1_vec > bf_thresh)
-    p_hc <- mean(bf_hc_vec > bf_thresh)
+    p_hc <- mean(bf_hc_vec < (1 / bf_thresh))
     
     cat("n_mid:", n_mid, "p_h1:", p_h1, "p_hc", p_hc, "\n")
     
