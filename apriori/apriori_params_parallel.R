@@ -84,5 +84,5 @@ apriori_params_parallel <- function(param_list_apriori, n_cores = NULL, ...) {
 
 full_apriori_sim <- apriori_params_parallel(param_list_apriori, n_cores = NULL)
 
-fwrite(full_apriori_sim, "analysis/apriori_sim_parallel.csv")
+fwrite(full_apriori_sim, "data/apriori_sim_parallel.csv")
 
