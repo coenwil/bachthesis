@@ -9,7 +9,7 @@ library(patchwork)
 library(stringr)
 
 # loading in sequential simulation data
-seq_sim <- fread("analysis/seq_sim.csv")
+seq_sim <- fread("data/seq_sim.csv")
 
 # removing first column (iteration), not of use here
 seq_sim <- seq_sim[,-1]
@@ -84,9 +84,27 @@ seq_grouped <- seq_grouped %>%
     b1 = str_extract(sim_code, "b1=\\d+"),
     b1 = as.numeric(str_remove(b1, "b1=")),
     
+    thresh = str_extract(sim_code, "bftarg=[0-9.]+"),
+    thresh = as.numeric(str_remove(thresh, "bftarg=")),
+    
+    step = str_extract(sim_code, "nstep=[0-9.]+"),
+    step = as.numeric(str_remove(step, "nstep=")),
+    
     correct = case_when(
-      (hyp %in% c("non-inferiority", "superiority") & b1 == 1) ~ 1,
-      (hyp == "equivalence" & b1 == 0) ~ 1,
+      (hyp %in% c("non-inferiority", "superiority")) & ((b1 == 1 & bf_mean >= thresh) | (b1 == 0 & bf_mean <= 1/thresh)) ~ 1,
+      (hyp == "equivalence" & (b1 == 0 & bf_mean >= thresh) | (b1 == 1 & bf_mean <= thresh)) ~ 1,
+      TRUE ~ 0
+    ),
+    conclusive = case_when(
+      (bf_mean >= thresh | bf_mean <= 1/thresh) ~ 1,
       TRUE ~ 0
     )
   )
+
+# adding a check to see if it was the complement that got the support
+seq_grouped$complement <- ifelse(seq_grouped$bf_mean < 1/seq_grouped$thresh, 1, 0)
+
+seq_grouped %>% count(hyp, conclusive, correct)
+
+seq_grouped %>% 
+  filter(conclusive == 0)
