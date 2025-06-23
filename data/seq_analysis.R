@@ -48,7 +48,7 @@ seq_grouped <- seq_grouped %>%
 
 # table to show mean and sd of CVs of variables of interest
 cv_summary <- seq_grouped %>%
-  select(sim_id, n_cv, bf_cv, fit_cv) %>%
+  select(sim_id, n_cv, bf_cv) %>%
   pivot_longer(cols = -sim_id, names_to = "variable", values_to = "cv") %>%
   group_by(variable) %>%
   summarise(
@@ -59,20 +59,23 @@ cv_summary <- seq_grouped %>%
 
 # plot of BF means, full range
 bf_fullrange_plot <- ggplot(seq_grouped, aes(x = bf_mean)) +
-  geom_density(fill = "grey", alpha = 0.6) +
+  geom_histogram(fill = "grey", color = "black") +
   labs(x = "AAFBF mean",
-       y = "Density") +
+       y = "Count") +
   theme_classic()
 
 # plot BF means, range 0-10
 bf_constrained_plot <- seq_grouped %>%
-  filter(bf_mean >= 0, bf_mean <= 10) %>%
+  filter(bf_mean >= 0, bf_mean <= 20) %>%
   ggplot(aes(x = bf_mean)) +
-  geom_density(fill = "grey", alpha = 0.6) +
-  labs(x = "AAFBF mean (range 0–10)", y = "") +
+  geom_histogram(fill = "grey", color = "black") +
+  labs(x = "AAFBF mean (range 0–20)", y = "") +
   theme_classic()
 
 (bf_plot <- (bf_fullrange_plot | bf_constrained_plot))
+
+# correlation between bayes factor mean and CV
+cor(seq_grouped$bf_mean, seq_grouped$bf_sd, method = "pearson")
 
 # seeing how often the sequential design found support when it should
 # extracting parameters from sim_code
@@ -87,24 +90,47 @@ seq_grouped <- seq_grouped %>%
     thresh = str_extract(sim_code, "bftarg=[0-9.]+"),
     thresh = as.numeric(str_remove(thresh, "bftarg=")),
     
+    nstart = str_extract(sim_code, "nstart=[0-9.]+"),
+    nstart = as.numeric(str_remove(nstart, "nstart=")),
+    
     step = str_extract(sim_code, "nstep=[0-9.]+"),
     step = as.numeric(str_remove(step, "nstep=")),
     
     correct = case_when(
-      (hyp %in% c("non-inferiority", "superiority")) & ((b1 == 1 & bf_mean >= thresh) | (b1 == 0 & bf_mean <= 1/thresh)) ~ 1,
-      (hyp == "equivalence" & (b1 == 0 & bf_mean >= thresh) | (b1 == 1 & bf_mean <= thresh)) ~ 1,
+      (hyp %in% c("non-inferiority", "superiority") & (b1 == 1 & bf_mean >= thresh)) ~ 1,
+      
+      (hyp == "equivalence" & (b1 == 0 & bf_mean >= thresh)) ~ 1,
       TRUE ~ 0
     ),
     conclusive = case_when(
       (bf_mean >= thresh | bf_mean <= 1/thresh) ~ 1,
       TRUE ~ 0
+    ),
+    trial_aligned = case_when(
+      (hyp %in% c("non-inferiority", "superiority") & (b1 == 1)) ~ 1,
+      (hyp == "equivalence" & (b1 == 0)) ~ 1,
+      TRUE ~ 0
     )
   )
 
-# adding a check to see if it was the complement that got the support
-seq_grouped$complement <- ifelse(seq_grouped$bf_mean < 1/seq_grouped$thresh, 1, 0)
+# conditional table with results
+full_cond_table <- seq_grouped %>% count(conclusive, correct, hyp, b1, nstart, step)
 
-seq_grouped %>% count(hyp, conclusive, correct)
+# all trial aligned sims were correct
+seq_grouped %>% count(trial_aligned, correct)
+
+sum(seq_sim$fail_count)
+
+sum(seq_sim$fail_count) / nrow(seq_sim)
 
 seq_grouped %>% 
-  filter(conclusive == 0)
+  filter(conclusive == 1, correct == 1, nstart == 50) %>% 
+  summarise(conc_correct_n = mean(n_mean))
+
+seq_grouped %>% 
+  filter(conclusive == 1, correct == 1, thresh == 10) %>% 
+  summarise(conc_correct_n = mean(n_mean))
+
+seq_grouped %>% 
+  filter(conclusive == 1, correct == 1, hyp == "equivalence") %>% 
+  summarise(conc_correct_n = mean(n_mean))
